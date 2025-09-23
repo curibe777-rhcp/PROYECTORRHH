@@ -112,7 +112,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     icon: 'success',
                     title: 'Empleado retirado',
                     text: 'El empleado ha sido retirado correctamente.',
-                    zIndex: 20000
+                    zIndex: 20000,
+                    showConfirmButton: false
                 });
                 cerrarModal();
                 setTimeout(() => location.reload(), 1000);

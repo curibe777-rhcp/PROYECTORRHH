@@ -6,6 +6,7 @@
     <title>Empleados</title>
     <link rel="stylesheet" href="../public/css/siderbar.css">
     <link rel="stylesheet" href="../public/css/employee.css">
+    <link rel="stylesheet" href="../public/css/employeedit.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -238,7 +239,7 @@
 
 
 <!-- MODAL EDITAR: Selección de sección a editar -->
-<div id="modal-edit" class="modal-edit">
+<div id="modal-edit" class="modal modal-edit">
     <div class="modal-edit-content">
         <h2 style="text-align: center; margin-bottom: 10px;">Editar Empleado</h2>
         <p style="text-align: center; margin-bottom: 25px;">Seleccione una sección a editar</p>
@@ -271,7 +272,7 @@
             <input type="text" id="editApellidoM">
         </div>
         <div class="modal-buttons">
-            <button class="btn-save-edit">Guardar</button>
+            <button class="btn-save-edit" id="btnSaveDatos">Guardar</button>
             <button class="btn-cancel-edit">Cancelar</button>
         </div>
     </div>
@@ -297,7 +298,7 @@
             <input type="text" id="editDireccion">
         </div>
         <div class="modal-buttons">
-            <button class="btn-save-edit">Guardar</button>
+            <button class="btn-save-edit" id="btnSaveUbicacion">Guardar</button>
             <button class="btn-cancel-edit">Cancelar</button>
         </div>
     </div>
@@ -323,7 +324,7 @@
             <input type="number" id="editSalario" step="0.01">
         </div>
         <div class="modal-buttons">
-            <button class="btn-save-edit">Guardar</button>
+            <button class="btn-save-edit" id="btnSaveLaborales">Guardar</button>
             <button class="btn-cancel-edit">Cancelar</button>
         </div>
     </div>

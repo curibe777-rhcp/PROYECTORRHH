@@ -128,10 +128,85 @@ class EmpleadoController {
     public function obtenerDatosUbicacion()
     {
         $idEmpleado = $_GET['idEmpleado'] ?? 0;
-        $datos = $this->empleadoModel->getDatosUbicacion($idEmpleado);
+        $ubicacion = $this->empleadoModel->getDatosUbicacion($idEmpleado);
 
         header("Content-Type: application/json; charset=utf-8");
-        echo json_encode($datos);
+        echo json_encode($ubicacion);
+    }
+
+    public function obtenerDatosLaborales()
+    {
+        $idEmpleado = $_GET['idEmpleado'] ?? 0;
+        $laborales = $this->empleadoModel->getDatosLaborales($idEmpleado);
+
+        header("Content-Type: application/json; charset=utf-8");
+        echo json_encode($laborales);
+    }
+
+    public function actualizarDatosPersonales() {
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (!$data || !isset($data['idEmpleado'], $data['nombre'], $data['apePaterno'], $data['apeMaterno'])) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "error" => "Datos incompletos"]);
+            return;
+        }
+
+        $idEmpleado = $data['idEmpleado'];
+        $nombre = $data['nombre'];
+        $apePaterno = $data['apePaterno'];
+        $apeMaterno = $data['apeMaterno'];
+
+        $resultado = $this->empleadoModel->actualizarDatosPersonales($idEmpleado, $nombre, $apePaterno, $apeMaterno);
+
+        header("Content-Type: application/json");
+        echo json_encode($resultado);
+    }
+
+    public function actualizarUbicacionEmpleado() {
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (!$data || !isset($data['idEmpleado'], $data['idDepartamento'], $data['idProvincia'], $data['idDistrito'], $data['direccion'])) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "error" => "Datos incompletos"]);
+            return;
+        }
+
+        $idEmpleado = $data['idEmpleado'];
+        $idDepartamento = $data['idDepartamento'];
+        $idProvincia = $data['idProvincia'];
+        $idDistrito = $data['idDistrito'];
+        $direccion = $data['direccion'];
+
+        $resultado = $this->empleadoModel->actualizarUbicacionEmpleado($idEmpleado, $idDepartamento, $idProvincia, $idDistrito, $direccion);
+
+        header("Content-Type: application/json; charset=utf-8");
+        echo json_encode($resultado);
+    }
+
+    public function actualizarDatosLaborales()
+    {
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (
+            !$data ||
+            !isset($data['idEmpleado'], $data['idArea'], $data['idCargo'], $data['telefono'], $data['salario'])
+        ) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "error" => "Datos incompletos"]);
+            return;
+        }
+
+        $idEmpleado = $data['idEmpleado'];
+        $idArea = $data['idArea'];
+        $idCargo = $data['idCargo'];
+        $telefono = $data['telefono'];
+        $salario = $data['salario'];
+
+        $resultado = $this->empleadoModel->actualizarDatosLaboralesEmpleado($idEmpleado, $idArea, $idCargo, $telefono, $salario);
+
+        header("Content-Type: application/json; charset=utf-8");
+        echo json_encode($resultado);
     }
 
 
@@ -163,6 +238,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $controller->obtenerDatos();
     } elseif ($action === 'datosUbicacion') {
         $controller->obtenerDatosUbicacion();
+    } elseif($action === 'datosLaborales') {
+        $controller->obtenerDatosLaborales();
     }
 
 
@@ -174,5 +251,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $controller->registrarEmpleadoUsuario();
     } elseif ($action === 'retirarEmpleado') {
         $controller->retirarEmpleado();
+    } elseif ($action === 'actualizarDatosPersonales') {
+        $controller->actualizarDatosPersonales();
+    } elseif($action === 'actualizarUbicacion'){
+        $controller->actualizarUbicacionEmpleado();
+    } elseif ($action === 'actualizarDatosLaborales') {
+        $controller->actualizarDatosLaborales();
     }
+
 }

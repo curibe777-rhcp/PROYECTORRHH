@@ -198,24 +198,89 @@ class Empleado {
         $stmt->closeCursor();
 
         return $row ?: null;
+    }
+
+
+    public function getDatosUbicacion(int $idEmpleado): ?array
+    {
+        $sql = "CALL sp_getDatosUbicacion(?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$idEmpleado]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $stmt->closeCursor();
+
+        return $row ?: null;
+    }
+
+    public function getDatosLaborales(int $idEmpleado): ?array
+    {
+        $sql = "CALL sp_datosLaboralesEmpleado(?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$idEmpleado]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $stmt->closeCursor();
+
+        return $row ?: null;
         
     }
 
-
-    public function getDatosUbicacion($idEmpleado)
-    {
+    public function actualizarDatosPersonales($idEmpleado, $nombre, $apePaterno, $apeMaterno) {
         try {
-            $stmt = $this->conn->prepare("CALL sp_getDatosUbicacion(:idEmpleado)");
-            $stmt->bindParam(":idEmpleado", $idEmpleado, PDO::PARAM_INT);
-            $stmt->execute();
+            $sql = "CALL sp_actualizarDatosPersonales(:idEmpleado, :nombre, :apePaterno, :apeMaterno)";
+            $stmt = $this->conn->prepare($sql);
 
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt->bindParam(':idEmpleado', $idEmpleado, PDO::PARAM_INT);
+            $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+            $stmt->bindParam(':apePaterno', $apePaterno, PDO::PARAM_STR);
+            $stmt->bindParam(':apeMaterno', $apeMaterno, PDO::PARAM_STR);
+
+            $stmt->execute();
             $stmt->closeCursor();
-            return $result ?: [];
+
+            return ["success" => true, "message" => "Datos personales actualizados correctamente"];
         } catch (PDOException $e) {
-            return ["error" => $e->getMessage()];
+            return ["success" => false, "error" => $e->getMessage()];
         }
     }
+
+
+    public function actualizarUbicacionEmpleado($idEmpleado, $idDepartamento, $idProvincia, $idDistrito, $direccion) {
+        try {
+            $sql = "CALL sp_actualizarUbicacionEmpleado(:idEmpleado, :idDepartamento, :idProvincia, :idDistrito, :direccion)";
+            $stmt = $this->conn->prepare($sql);
+
+            $stmt->bindParam(':idEmpleado', $idEmpleado, PDO::PARAM_INT);
+            $stmt->bindParam(':idDepartamento', $idDepartamento, PDO::PARAM_INT);
+            $stmt->bindParam(':idProvincia', $idProvincia, PDO::PARAM_INT);
+            $stmt->bindParam(':idDistrito', $idDistrito, PDO::PARAM_INT);
+            $stmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);
+
+            $stmt->execute();
+            $stmt->closeCursor();
+
+            return ["success" => true, "message" => "Ubicación actualizada correctamente"];
+        } catch (PDOException $e) {
+            return ["success" => false, "error" => $e->getMessage()];
+        }
+    }
+
+    public function actualizarDatosLaboralesEmpleado(int $idEmpleado, int $idAreaTrabajo, int $idCargo, string $telefono, float $salario): array
+    {
+        try {
+            $sql = "CALL sp_actualizarDatosLaboralesEmpleado(?, ?, ?, ?, ?)";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute([$idEmpleado, $idAreaTrabajo, $idCargo, $telefono, $salario]);
+
+            $stmt->closeCursor();
+
+            return ["success" => true];
+        } catch (PDOException $e) {
+            return ["success" => false, "error" => $e->getMessage()];
+        }
+    }
+
 
 
 }
