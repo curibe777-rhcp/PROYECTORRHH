@@ -1,53 +1,87 @@
 <?php
-require_once __DIR__ . '/../model/Permisos.php';
+require_once __DIR__ . '/../models/Permisos.php';
 
-$permiso = new Permisos();
+class PermisoController {
+    private $permisoModel;
 
-header("Content-Type: application/json; charset=UTF-8");
+    public function __construct() {
+        $this->permisoModel = new Permiso();
+    }
 
-$action = $_GET["action"] ?? "";
+    // ✅ Listar permisos
+    public function listar() {
+        $permisos = $this->permisoModel->listarPermisos();
+        header("Content-Type: application/json");
+        echo json_encode(["success" => true, "data" => $permisos]);
+    }
 
-switch ($action) {
-    case "listarPermisos":
-        echo json_encode($permiso->listarPermisos());
-        break;
+    // ✅ Obtener tipos de permiso
+    public function obtenerTipos() {
+        $tipos = $this->permisoModel->obtenerTiposPermiso();
+        header("Content-Type: application/json");
+        echo json_encode($tipos);
+    }
 
-    case "listarTipos":
-        echo json_encode($permiso->obtenerTiposPermiso());
-        break;
+    // ✅ Obtener estados de permiso
+    public function obtenerEstados() {
+        $estados = $this->permisoModel->obtenerEstadosPermiso();
+        header("Content-Type: application/json");
+        echo json_encode($estados);
+    }
 
-    case "listarMotivos":
-        echo json_encode($permiso->obtenerMotivos());
-        break;
-
-    case "registrarPermiso":
+    // ✅ Registrar permiso
+    public function registrar() {
         $data = json_decode(file_get_contents("php://input"), true);
+
         if (!$data) {
-            echo json_encode(["success" => false, "error" => "Datos inválidos"]);
-            exit;
+            http_response_code(400);
+            echo json_encode(["success" => false, "error" => "Datos no válidos"]);
+            return;
         }
-        echo json_encode($permiso->registrarPermiso($data));
-        break;
 
-    case "eliminarPermiso":
+        $resultado = $this->permisoModel->registrarPermiso($data);
+        header("Content-Type: application/json");
+        echo json_encode($resultado);
+    }
+
+    // ✅ Actualizar estado (Aprobar/Rechazar)
+    public function actualizarEstado() {
         $data = json_decode(file_get_contents("php://input"), true);
-        if (!isset($data["idPermiso"])) {
-            echo json_encode(["success" => false, "error" => "ID de permiso requerido"]);
-            exit;
-        }
-        echo json_encode($permiso->eliminarPermiso((int)$data["idPermiso"]));
-        break;
 
-    case "getDatosPermiso":
-        $id = $_GET["idPermiso"] ?? null;
-        if (!$id) {
-            echo json_encode(["success" => false, "error" => "ID de permiso requerido"]);
-            exit;
+        if (!$data || !isset($data["idPermiso"], $data["idEstadoPermiso"], $data["usuario_mod"])) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "error" => "Datos incompletos"]);
+            return;
         }
-        echo json_encode($permiso->getDatosPermiso((int)$id));
-        break;
 
-    default:
-        echo json_encode(["success" => false, "error" => "Acción no válida"]);
-        break;
+        $resultado = $this->permisoModel->actualizarEstado(
+            $data["idPermiso"],
+            $data["idEstadoPermiso"],
+            $data["usuario_mod"]
+        );
+
+        header("Content-Type: application/json");
+        echo json_encode($resultado);
+    }
 }
+
+// ✅ Enrutador simple
+$action = $_GET['action'] ?? '';
+$controller = new PermisoController();
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if ($action === 'listar') {
+        $controller->listar();
+    } elseif ($action === 'tipos') {
+        $controller->obtenerTipos();
+    } elseif ($action === 'estados') {
+        $controller->obtenerEstados();
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($action === 'registrar') {
+        $controller->registrar();
+    } elseif ($action === 'actualizarEstado') {
+        $controller->actualizarEstado();
+    }
+}
+
