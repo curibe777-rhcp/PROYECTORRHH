@@ -1,36 +1,38 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const tbody = document.querySelector(".employee-table tbody");
+    document.querySelector(".employee-table tbody").addEventListener("click", async (e) => {
+        const btn = e.target.closest(".btn-delete");
+        if (!btn) return;
 
-    function cargarPermisos() {
-        fetch("../controllers/PermisoController.php?action=listar")
-            .then(res => res.json())
-            .then(data => {
-                tbody.innerHTML = "";
-                if (data.success && data.data.length > 0) {
-                    data.data.forEach(p => {
-                        const row = `
-                            <tr>
-                                <td>${p.idPermiso}</td>
-                                <td>${p.nombreEmpleado}</td>
-                                <td>${p.tipoPermiso}</td>
-                                <td>${p.motivo}</td>
-                                <td>${p.fechaInicio}</td>
-                                <td>${p.fechaFin}</td>
-                                <td>${p.descripcion}</td>
-                                <td>
-                                    <button class="btn-edit" data-id="${p.idPermiso}">Editar</button>
-                                    <button class="btn-delete" data-id="${p.idPermiso}">Eliminar</button>
-                                </td>
-                            </tr>
-                        `;
-                        tbody.insertAdjacentHTML("beforeend", row);
-                    });
-                }
+        const idPermiso = btn.dataset.id;
+
+        const confirm = await Swal.fire({
+            title: "¿Eliminar permiso?",
+            text: "Esta acción no se puede deshacer",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const res = await fetch("../controller/PermisoController.php?action=eliminarPermiso", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ idPermiso })
             });
-    }
+            const result = await res.json();
 
-    cargarPermisos();
-
-    // Recargar cuando se guarde un permiso
-    document.addEventListener("permisoGuardado", cargarPermisos);
+            if (result.success) {
+                Swal.fire("Eliminado", "El permiso fue eliminado", "success");
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                Swal.fire("Error", result.error || "No se pudo eliminar", "error");
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire("Error", "Error en la conexión con el servidor", "error");
+        }
+    });
 });
