@@ -4,99 +4,81 @@ require_once __DIR__ . '/../config/ConexionBD.php';
 class Permiso {
     private $conn;
 
-    public function __construct()
-    {
-        $this->conn = (new Database())->getConnection();
+    public function __construct() {
+        $database = new Database();
+        $this->conn = $database->getConnection();
     }
 
-    // ✅ Listar todos los permisos
+    // Listar todos los permisos
     public function listarPermisos() {
-        try {
-            $sql = "CALL sp_listar_permisos()";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute();
-            $permisos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $stmt->closeCursor();
-            return $permisos ?: [];
-        } catch (PDOException $e) {
-            error_log("Error en listarPermisos: " . $e->getMessage());
-            return [];
-        }
+        $sql = "CALL sp_listar_permisos()";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ✅ Listar tipos de permiso
-    public function obtenerTiposPermiso() {
-        try {
-            $sql = "CALL sp_listar_tipos_permiso()";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute();
-            $tipos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $stmt->closeCursor();
-            return $tipos ?: [];
-        } catch (PDOException $e) {
-            return ["error" => $e->getMessage()];
-        }
+    // Registrar un permiso nuevo
+    public function registrarPermiso($idEmpleado, $idTipoPermiso, $fechaInicio, $fechaFin, $estado, $motivo) {
+        $sql = "CALL sp_registrar_permiso(:idEmpleado, :idTipoPermiso, :fechaInicio, :fechaFin, :estado, :motivo)";
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindParam(":idEmpleado", $idEmpleado, PDO::PARAM_INT);
+        $stmt->bindParam(":idTipoPermiso", $idTipoPermiso, PDO::PARAM_INT);
+        $stmt->bindParam(":fechaInicio", $fechaInicio);
+        $stmt->bindParam(":fechaFin", $fechaFin);
+        $stmt->bindParam(":estado", $estado);
+        $stmt->bindParam(":motivo", $motivo);
+
+        return $stmt->execute();
     }
 
-    // ✅ Listar estados de permiso
-    public function obtenerEstadosPermiso() {
-        try {
-            $sql = "CALL sp_listar_estados_permiso()";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute();
-            $estados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $stmt->closeCursor();
-            return $estados ?: [];
-        } catch (PDOException $e) {
-            return ["error" => $e->getMessage()];
-        }
+
+    // Obtener un permiso por ID
+    public function obtenerPermiso($idPermiso) {
+        $sql = "CALL sp_obtener_permiso(:idPermiso)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(":idPermiso", $idPermiso, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // ✅ Registrar un nuevo permiso
-    public function registrarPermiso($data) {
-        try {
-            $sql = "CALL sp_registrarPermiso(
-                :idEmpleado,
-                :fechaInicio,
-                :fechaFin,
-                :idTipoPermiso,
-                :motivo,
-                :usuario_reg
-            )";
-            $stmt = $this->conn->prepare($sql);
+    // Actualizar permiso existente
+    public function actualizarPermiso($idPermiso, $idEmpleado, $idTipoPermiso, $fechaInicio, $fechaFin, $estado, $motivo) {
+    $sql = "CALL sp_actualizar_permiso(:idPermiso, :idEmpleado, :idTipoPermiso, :fechaInicio, :fechaFin, :estado, :motivo)";
+    $stmt = $this->conn->prepare($sql);
 
-            $stmt->bindParam(":idEmpleado", $data["idEmpleado"], PDO::PARAM_INT);
-            $stmt->bindParam(":fechaInicio", $data["fechaInicio"], PDO::PARAM_STR);
-            $stmt->bindParam(":fechaFin", $data["fechaFin"], PDO::PARAM_STR);
-            $stmt->bindParam(":idTipoPermiso", $data["idTipoPermiso"], PDO::PARAM_INT);
-            $stmt->bindParam(":motivo", $data["motivo"], PDO::PARAM_STR);
-            $stmt->bindParam(":usuario_reg", $data["usuario_reg"], PDO::PARAM_INT);
+    $stmt->bindParam(":idPermiso", $idPermiso, PDO::PARAM_INT);
+    $stmt->bindParam(":idEmpleado", $idEmpleado, PDO::PARAM_INT);
+    $stmt->bindParam(":idTipoPermiso", $idTipoPermiso, PDO::PARAM_INT);
+    $stmt->bindParam(":fechaInicio", $fechaInicio);
+    $stmt->bindParam(":fechaFin", $fechaFin);
+    $stmt->bindParam(":estado", $estado);
+    $stmt->bindParam(":motivo", $motivo);
 
-            $stmt->execute();
-            $stmt->closeCursor();
+    return $stmt->execute();
+}
 
-            return ["success" => true, "message" => "Permiso registrado correctamente"];
-        } catch (PDOException $e) {
-            return ["success" => false, "error" => $e->getMessage()];
-        }
+    // Eliminar permiso
+    public function eliminarPermiso($idPermiso) {
+        $sql = "CALL sp_eliminar_permiso(:idPermiso)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(":idPermiso", $idPermiso, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
-    // ✅ Aprobar / Rechazar permiso
-    public function actualizarEstado($idPermiso, $idEstadoPermiso, $usuario_mod) {
-        try {
-            $sql = "CALL sp_actualizarEstadoPermiso(:idPermiso, :idEstadoPermiso, :usuario_mod)";
-            $stmt = $this->conn->prepare($sql);
+    // Listar tipos de permiso
+    public function tiposPermiso() {
+        $sql = "CALL sp_listar_tipos_permiso()";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-            $stmt->bindParam(":idPermiso", $idPermiso, PDO::PARAM_INT);
-            $stmt->bindParam(":idEstadoPermiso", $idEstadoPermiso, PDO::PARAM_INT);
-            $stmt->bindParam(":usuario_mod", $usuario_mod, PDO::PARAM_INT);
-
-            $stmt->execute();
-            $stmt->closeCursor();
-
-            return ["success" => true, "message" => "Estado actualizado correctamente"];
-        } catch (PDOException $e) {
-            return ["success" => false, "error" => $e->getMessage()];
-        }
+    // Listar empleados activos (para asignar permisos)
+    public function listarEmpleados() {
+        $sql = "CALL sp_listar_empleados()";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
