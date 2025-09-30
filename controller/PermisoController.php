@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../models/Permisos.php';
+require_once __DIR__ . '/../model/Permisos.php';
 
 class PermisoController {
     private $permisoModel;
@@ -8,80 +8,133 @@ class PermisoController {
         $this->permisoModel = new Permiso();
     }
 
-    // ✅ Listar permisos
-    public function listar() {
-        $permisos = $this->permisoModel->listarPermisos();
-        header("Content-Type: application/json");
-        echo json_encode(["success" => true, "data" => $permisos]);
+    public function handleRequest($action) {
+        switch ($action) {
+            case "listarPermisos":
+                $this->listarPermisos();
+                break;
+            case "registrarPermiso":
+                $this->registrarPermiso();
+                break;
+            case "obtenerPermiso":
+                $this->obtenerPermiso();
+                break;
+            case "actualizarPermiso":
+                $this->actualizarPermiso();
+                break;
+            case "eliminarPermiso":
+                $this->eliminarPermiso();
+                break;
+            case "tiposPermiso":
+                $this->tiposPermiso();
+                break;
+            case "listarEmpleados":
+                $this->listarEmpleados();
+                break;
+            default:
+                $this->response(["success" => false, "error" => "Acción no válida"]);
+        }
     }
 
-    // ✅ Obtener tipos de permiso
-    public function obtenerTipos() {
-        $tipos = $this->permisoModel->obtenerTiposPermiso();
-        header("Content-Type: application/json");
-        echo json_encode($tipos);
+    private function listarPermisos() {
+        $data = $this->permisoModel->listarPermisos();
+        $this->response($data);
     }
 
-    // ✅ Obtener estados de permiso
-    public function obtenerEstados() {
-        $estados = $this->permisoModel->obtenerEstadosPermiso();
-        header("Content-Type: application/json");
-        echo json_encode($estados);
-    }
+    private function registrarPermiso() {
+        $input = json_decode(file_get_contents("php://input"), true);
 
-    // ✅ Registrar permiso
-    public function registrar() {
-        $data = json_decode(file_get_contents("php://input"), true);
-
-        if (!$data) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "error" => "Datos no válidos"]);
+        if (!$input) {
+            $this->response(["success" => false, "error" => "Datos inválidos"]);
             return;
         }
 
-        $resultado = $this->permisoModel->registrarPermiso($data);
-        header("Content-Type: application/json");
-        echo json_encode($resultado);
-    }
-
-    // ✅ Actualizar estado (Aprobar/Rechazar)
-    public function actualizarEstado() {
-        $data = json_decode(file_get_contents("php://input"), true);
-
-        if (!$data || !isset($data["idPermiso"], $data["idEstadoPermiso"], $data["usuario_mod"])) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "error" => "Datos incompletos"]);
-            return;
-        }
-
-        $resultado = $this->permisoModel->actualizarEstado(
-            $data["idPermiso"],
-            $data["idEstadoPermiso"],
-            $data["usuario_mod"]
+        $ok = $this->permisoModel->registrarPermiso(
+            $input["idEmpleado"],
+            $input["idTipoPermiso"],
+            $input["fechaInicio"],
+            $input["fechaFin"],
+            $input["estado"],
+            $input["motivo"]
         );
 
+        $this->response(["success" => $ok]);
+    }
+
+    private function obtenerPermiso() {
+        $idPermiso = $_GET["idPermiso"] ?? null;
+
+        if (!$idPermiso) {
+            $this->response(["success" => false, "error" => "ID no proporcionado"]);
+            return;
+        }
+
+        $permiso = $this->permisoModel->obtenerPermiso($idPermiso);
+
+        if (!$permiso) {
+            $this->response(["success" => false, "error" => "No encontrado"]);
+            return;
+        }
+
+        // 🔹 devolvemos directamente el objeto permiso
+        $this->response($permiso);
+    }
+
+    private function actualizarPermiso() {
+        $input = json_decode(file_get_contents("php://input"), true);
+
+        if (
+            !$input || 
+            !isset($input["idPermiso"]) || 
+            !isset($input["idEmpleado"]) || 
+            !isset($input["idTipoPermiso"])
+        ) {
+            $this->response(["success" => false, "error" => "Datos inválidos"]);
+            return;
+        }
+
+        $ok = $this->permisoModel->actualizarPermiso(
+            $input["idPermiso"],
+            $input["idEmpleado"],
+            $input["idTipoPermiso"],
+            $input["fechaInicio"],
+            $input["fechaFin"],
+            $input["estado"],
+            $input["motivo"]
+        );
+
+        $this->response(["success" => $ok]);
+    }
+
+    private function eliminarPermiso() {
+        $input = json_decode(file_get_contents("php://input"), true);
+        $idPermiso = $input["idPermiso"] ?? null;
+
+        if (!$idPermiso) {
+            $this->response(["success" => false, "error" => "ID no proporcionado"]);
+            return;
+        }
+
+        $ok = $this->permisoModel->eliminarPermiso($idPermiso);
+        $this->response(["success" => $ok]);
+    }
+
+    private function tiposPermiso() {
+        $data = $this->permisoModel->tiposPermiso();
+        $this->response($data);
+    }
+
+    private function listarEmpleados() {
+        $data = $this->permisoModel->listarEmpleados();
+        $this->response($data);
+    }
+
+    private function response($data) {
         header("Content-Type: application/json");
-        echo json_encode($resultado);
+        echo json_encode($data);
     }
 }
 
-// ✅ Enrutador simple
-$action = $_GET['action'] ?? '';
+$action = $_GET["action"] ?? null;
 $controller = new PermisoController();
-
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    if ($action === 'listar') {
-        $controller->listar();
-    } elseif ($action === 'tipos') {
-        $controller->obtenerTipos();
-    } elseif ($action === 'estados') {
-        $controller->obtenerEstados();
-    }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($action === 'registrar') {
-        $controller->registrar();
-    } elseif ($action === 'actualizarEstado') {
-        $controller->actualizarEstado();
-    }
-}
-
+$controller->handleRequest($action);
